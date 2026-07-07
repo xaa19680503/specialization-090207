@@ -1,0 +1,146 @@
+-- phpMyAdmin SQL Dump
+-- version 5.2.3
+-- https://www.phpmyadmin.net/
+--
+-- Host: MySQL-5.7:3306
+-- Generation Time: Feb 14, 2026 at 11:18 AM
+-- Server version: 5.7.44
+-- PHP Version: 8.4.13
+
+SET SQL_MODE = "NO_AUTO_VALUE_ON_ZERO";
+START TRANSACTION;
+SET time_zone = "+00:00";
+
+
+/*!40101 SET @OLD_CHARACTER_SET_CLIENT=@@CHARACTER_SET_CLIENT */;
+/*!40101 SET @OLD_CHARACTER_SET_RESULTS=@@CHARACTER_SET_RESULTS */;
+/*!40101 SET @OLD_COLLATION_CONNECTION=@@COLLATION_CONNECTION */;
+/*!40101 SET NAMES utf8mb4 */;
+
+--
+-- Database: `vas`
+--
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `ser`
+--
+
+CREATE TABLE `ser` (
+  `id` int(11) NOT NULL,
+  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `ade` date NOT NULL,
+  `selary` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `ser`
+--
+
+INSERT INTO `ser` (`id`, `name`, `ade`, `selary`) VALUES
+(1, '767756756   аравриапрпр', '2026-02-02', 200),
+(1, '767756756   аравриапрпр', '2026-02-02', 200),
+(5, 'еееееееееееееее', '2026-02-16', 200),
+(5, 'ghfghfghhfgh  uhgyuygtu', '2026-02-26', 6666);
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `stupor`
+--
+
+CREATE TABLE `stupor` (
+  `id_stupor` int(11) NOT NULL,
+  `name` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `telef`
+--
+
+CREATE TABLE `telef` (
+  `id_tel` int(11) NOT NULL,
+  `tel` varchar(34) COLLATE utf8mb4_unicode_ci NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+--
+-- Dumping data for table `telef`
+--
+
+INSERT INTO `telef` (`id_tel`, `tel`) VALUES
+(1, '1233445566776'),
+(5, '55555'),
+(2, '66666666'),
+(6, '8889896'),
+(3, '89896');
+
+--
+-- Indexes for dumped tables
+--
+
+--
+-- Indexes for table `ser`
+--
+ALTER TABLE `ser`
+  ADD KEY `id` (`id`),
+  ADD KEY `id_2` (`id`);
+
+--
+-- Indexes for table `stupor`
+--
+ALTER TABLE `stupor`
+  ADD PRIMARY KEY (`id_stupor`),
+  ADD UNIQUE KEY `name` (`name`);
+
+--
+-- Indexes for table `telef`
+--
+ALTER TABLE `telef`
+  ADD PRIMARY KEY (`id_tel`) USING BTREE,
+  ADD UNIQUE KEY `tel` (`tel`);
+
+--
+-- AUTO_INCREMENT for dumped tables
+--
+
+--
+-- AUTO_INCREMENT for table `ser`
+--
+ALTER TABLE `ser`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=6;
+
+--
+-- AUTO_INCREMENT for table `stupor`
+--
+ALTER TABLE `stupor`
+  MODIFY `id_stupor` int(11) NOT NULL AUTO_INCREMENT;
+
+--
+-- AUTO_INCREMENT for table `telef`
+--
+ALTER TABLE `telef`
+  MODIFY `id_tel` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=7;
+
+--
+-- Constraints for dumped tables
+--
+
+--
+-- Constraints for table `ser`
+--
+ALTER TABLE `ser`
+  ADD CONSTRAINT `ser_ibfk_1` FOREIGN KEY (`id`) REFERENCES `telef` (`id_tel`);
+
+--
+-- Constraints for table `stupor`
+--
+ALTER TABLE `stupor`
+  ADD CONSTRAINT `stupor_ibfk_1` FOREIGN KEY (`id_stupor`) REFERENCES `telef` (`id_tel`);
+COMMIT;
+
+/*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
+/*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
+/*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
