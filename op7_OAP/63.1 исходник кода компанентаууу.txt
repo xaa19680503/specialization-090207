@@ -1,0 +1,258 @@
+unit xaa_img1;
+
+{$mode ObjFPC}{$H+}
+
+interface
+
+uses   LCLProc, math,
+  Classes, SysUtils, LResources, Forms, Controls, Graphics, Dialogs, ExtCtrls;
+ // Windows;
+
+type
+  xaa_img = class(TcustomImage)
+ private  chr_fr_L,chr_fr_r:char;  //нажатие клавиши  на выстрелы с права
+ chr_fr_d,chr_fr_u:char;  //нажатие клавиши  на выстрелы с права
+ ft:tpicture;
+FOffsetX: Integer;  FOffsetY: Integer;            // скроллинг
+chr_stop,chr_left,chr_right,chr_up,chr_down:char; // ответят за  нажатие клавиш…
+ spd_x, spd_y:integer;                                                    // ответят за  позицию… скорость передвижения
+ procedure SetOffsetX(AValue: Integer); // объявим процедуру
+ procedure SetOffsetY(AValue: Integer); // объявим процедуру
+ procedure  SetPicture(AValue :TPicture);
+
+ protected
+   function create_fire_down(Sender: TObject):timage;
+   function create_fire_up(Sender: TObject):timage;
+  function create_fire_LEFT(Sender: TObject):timage;
+  function create_fire(Sender: TObject):timage;  // создание объекта выстрел  на выстрелы с права
+ published     // опишем данные переменные с диспетчере объектов =  его свойства и события
+property char_fire_right: char read chr_fr_r write chr_fr_r;  // огонь с права
+property char_fire_left: char read chr_fr_L write chr_fr_L;  // огонь с слева
+property char_fire_up: char read chr_fr_u write chr_fr_u;  // огонь в верх
+property char_fire_down: char read chr_fr_d write chr_fr_d;  // огонь вниз
+property OffsetX: Integer read FOffsetX  write SetOffsetX default 10;
+property OffsetY: Integer read FOffsetY  write SetOffsetY default 5;
+property char_stop: char  read chr_stop  write chr_stop;
+property char_left: char  read chr_left  write chr_left;
+property char_up: char    read chr_up    write chr_up ;
+property char_down: char  read chr_down  write chr_down ;
+property char_right: char read chr_right write chr_right;
+property tt: tpicture read ft write SetPicture;
+ property picture;  // компонент загрузки графики
+ public
+  hana:integer;                 //контроль жизни
+  img: array of timage;  //массив пуль
+  Lmg: array of timage;  //массив пуль в лево
+  dmg: array of timage;  //массив пуль в низ
+  umg: array of timage;  //массив пуль в низ
+ function speed_fire(m:array of timage):string; // контроль попадания
+ function DestRect: TRect; override;        // объявим процедуру  ввод значений
+ procedure blink(limit,predel:integer);  // объявим процедуру мигания
+ function key_xy(k:char):string;
+ function go_xy(wdth,hght:integer):string;
+ { Public declarations }
+    constructor Create(AOwner : TComponent); override;
+    destructor Destroy; override;
+  end;
+
+procedure Register;
+
+implementation
+
+constructor xaa_img.Create(AOwner : TComponent);
+begin
+  inherited Create(AOwner);
+  { Инициализируем переменные }
+
+//  ft := TPicture.Create;
+
+end;
+
+destructor xaa_img.Destroy;
+begin
+  if Assigned(ft) then
+    ft.Free; // Освобождаем glyph
+  inherited Destroy;
+end;
+procedure xaa_img.SetPicture(AValue :TPicture);
+
+begin
+ if AValue = nil then exit;
+ if ft=nil then ft:=tpicture.Create;
+                ft.Assign(AValue);
+      Invalidate;
+end;
+function xaa_img.speed_fire(m:array of timage):string;
+var h,w,i,n:integer; s:string; //  локальные переменные определили
+begin  n:=length(m)-1;   h:=-1;w:=-1; //   начальные данные
+  if hana>=0 then  //энергии более нуля
+  for i:=0 to n do      begin//  цикл переборки объектов пуль
+      if m[i]=nil then continue;  // пулю потратили
+      if sizeof(m[i]) = 0 then continue;  //  доп. контроль, что пули нет
+      if m[i].ShowHint then continue;   // дот контроль  что пуля пропала  с видимости
+      h:=m[i].top;       w:=m[i].left;  //  уточняем  координаты  пули
+      if h>top then                    // пуля  ниже верха
+      if h<top+height then    //  пуля выше   ступни
+      if w>left then                //  пуля  за  гранью
+      if w<left+width then  //  пуля  не вылетела из граней
+         begin dec(hana);    //  пуля  попала и  снижение уровня жизни
+         m[i].Hide; //m[i].free; m[i]:=nil; //  стираем  пулю  убираем объект  пули
+         if hana<0 then hide;           //  если  жизни хана  то убираем цель
+         end;
+      end; s:=inttostr(hana)+#13+#10+  //  отображаем данные
+              inttostr(top)+#13+#10+  //  перевод каретки =+#13+#10
+              inttostr(left)+#13+#10+
+              inttostr(top+height)+#13+#10+
+              inttostr(width+left)+#13+#10+
+              inttostr(h)+#13+#10+ inttostr(w);
+   result:='live = '+s;  //  данные на результат передаём
+end;
+
+
+
+   function xaa_img.create_fire(Sender: TObject):timage;
+   var LN:integer;         //  локальную переменную определили
+   begin   LN:=length(img);    setlength(img,ln+1);  //  добавим пулю в очедь
+       img[ln]:=timage.Create(self);           //  создадим объект  под  пулю в очереди
+       img[ln].Canvas.Pen.Color:=clred;  //  укажем цвет пули
+       img[ln].Parent:=parent;                 //   укажем где будет пуля отображаться
+       img[ln].Top:=top+5;    img[ln].Left:=width+left+5;  //  укажем координаты пули начальные
+       img[ln].width:=15;    img[ln].Height:=5;                    //   укажем размер пули
+       img[ln].Canvas.Rectangle(1,1,img[ln].width-1,img[ln].height-1); //  рисуем пулю
+       img[ln].Show;      //  покажем пулю
+      result:=img[ln];  //  пулю передали на результат
+   end;
+
+   function xaa_img.create_fire_up(Sender: TObject):timage;
+   var LN:integer;                //  локальную переменную определили
+   begin     LN:=length(umg);    setlength(umg,ln+1);  //  добавим пулю в очедь
+       umg[ln]:=timage.Create(self);           //  создадим объект  под  пулю в очереди
+       umg[ln].Canvas.Pen.Color:=clgreen;  //  укажем цвет пули
+       umg[ln].Parent:=parent;                 //   укажем где будет пуля отображаться
+       umg[ln].Top:=top+5;  umg[ln].Left:=width+left+5;  //  укажем координаты пули начальные
+       umg[ln].width:=5;   umg[ln].Height:=15;                    //   укажем размер пули
+       umg[ln].Canvas.Rectangle(1,1,umg[ln].width-1,umg[ln].height-1); //  рисуем пулю
+       umg[ln].Show;      //  покажем пулю
+      result:=umg[ln];   //  пулю передали на результат
+   end;
+
+   function xaa_img.create_fire_down(Sender: TObject):timage;
+   var LN:integer;                //  локальную переменную определили
+   begin     LN:=length(dmg);    setlength(dmg,ln+1);  //  добавим пулю в очедь
+       dmg[ln]:=timage.Create(self);           //  создадим объект  под  пулю в очереди
+       dmg[ln].Canvas.Pen.Color:=clyellow;  //  укажем цвет пули
+       dmg[ln].Parent:=parent;                 //   укажем где будет пуля отображаться
+       dmg[ln].Top:=top+5;  dmg[ln].Left:=width+left+5;  //  укажем координаты пули начальные
+       dmg[ln].width:=5;   dmg[ln].Height:=15;                    //   укажем размер пули
+       dmg[ln].Canvas.Rectangle(1,1,dmg[ln].width-1,dmg[ln].height-1); //  рисуем пулю
+       dmg[ln].Show;      //  покажем пулю
+      result:=dmg[ln];   //  пулю передали на результат
+   end;
+   function xaa_img.create_fire_LEFT(Sender: TObject):timage;
+   var LN:integer;                                                               //  локальную переменную определили
+   begin     LN:=length(Lmg);    setlength(Lmg,ln+1);  //  добавим пулю в очедь
+       Lmg[ln]:=timage.Create(self);           //  создадим объект  под  пулю в очереди
+       Lmg[ln].Canvas.Pen.Color:=clblue;  //  укажем цвет пули
+       LMg[ln].Parent:=parent;                 //   укажем где будет пуля отображаться
+       Lmg[ln].Top:=top-2;    Lmg[ln].Left:=LEFT-2;  //  укажем координаты пули начальные
+       Lmg[ln].width:=15;    Lmg[ln].Height:=5;                    //   укажем размер пули
+       Lmg[ln].Canvas.Rectangle(1,1,Lmg[ln].width-1,Lmg[ln].height-1); //  рисуем пулю
+       Lmg[ln].Show;      //  покажем пулю
+      result:=Lmg[ln];  //  пулю передали на результат
+   end;
+
+
+function xaa_img.key_xy(k:char):string;
+var s:string; //  локальную переменную определили
+begin          // обеспечим характер движения
+if  FOffsety=0 then FOffsety:=5;
+if k=chr_fr_r  then begin spd_x:=0;    create_fire(self); s:=k; end else //выстрел в право
+if k=chr_fr_L  then begin spd_x:=0;    create_fire_LEFT(self); s:=k; end else //выстрел в право
+if k=chr_fr_d  then begin spd_y:=0;    create_fire_down(self); s:=k; end else //выстрел в право
+if k=chr_fr_u  then begin spd_y:=0;    create_fire_up(self); s:=k; end else //выстрел в право
+if k=chr_up    then begin spd_x:=0;    spd_y:=-FOffsety;  s:=k; end else
+if k=chr_down  then begin spd_x:=0;    spd_y:=FOffsety;   s:=k; end else
+if k=chr_left  then begin spd_x:=-FOffsety; spd_y:=0;     s:=k; end else
+if k=chr_right then begin spd_x:= FOffsety; spd_y:=0;     s:=k; end else
+if k=chr_stop  then begin spd_x:=0;         spd_y:=0;     s:=k; end;
+
+  result:=s+' '+inttostr(FOffsetX)+'  ' +inttostr( OffsetX)+'  ' +inttostr( OffsetY)+' '+k;
+end;
+function xaa_img.go_xy(wdth,hght:integer):string;
+      var s:string;      n,i:integer;
+begin   Left := Max(0, Min(Wdth - Width, Left +spd_x));  // обеспечим движение     -----------
+                   Top := Max(0, Min(Hght - Height, Top + spd_y));
+
+
+        n:=-1;   // начальное значение  наличия  пуль в трассе СЛЕВА
+    for i:=0  to length(umg)-1 do
+          begin  if umg[i] = nil then continue; // контроль наличия пули
+               if sizeof(umg[i]) = 0 then continue;  // повторный контроль
+               if umg[i].top>0        then umg[i].top:=umg[i].top-3; // перемещение пули
+               if umg[i].top<5  then begin umg[i].Hide;umg[i].free; umg[i]:=nil;
+                          continue ;  end;  //улетелаs
+               inc(n); //если пуля есть, то её считаем
+           end; if n<0 then setlength(umg,0) ;    //если пуль нет, то  стираем  трассу пуль
+
+            n:=-1;   // начальное значение  наличия  пуль в трассе СЛЕВА
+       for i:=0  to length(Lmg)-1 do
+           begin  if Lmg[i] = nil then continue; // контроль наличия пули
+                  if sizeof(Lmg[i]) = 0 then continue;  // повторный контроль
+                  if lmg[i].left>0    then Lmg[i].Left:=Lmg[i].Left-3; // перемещение пули
+                  if Lmg[i].left<5  then begin    Lmg[i].Hide;  Lmg[i].free; Lmg[i]:=nil;
+                                                    continue ;  end;  //улетела
+                   inc(n); //если пуля есть, то её считаем
+           end; if n<0 then setlength(Lmg,0) ;    //если пуль нет, то  стираем  трассу пуль
+
+           n:=-1;   // начальное значение  наличия  пуль в трассе СПРАВА
+        for i:=0  to length(img)-1 do
+            begin                if img[i] = nil then continue; // контроль наличия пули
+                          if sizeof(img[i]) = 0 then continue;  // повторный контроль
+                 if img[i].left<400+left    then img[i].Left:=img[i].Left+3; // перемещение пули
+                if img[i].left>390 +left  then begin    img[i].Hide;   img[i].free;    img[i]:=nil;
+                                                continue ;  end;  //улетела
+               inc(n); //если пуля есть, то её считаем
+            end;      if n<0 then setlength(img,0) ;    //если пуль нет, то  стираем  трассу пуль
+
+
+            n:=-1;   // начальное значение  наличия  пуль в трассе  вниз
+        for i:=0  to length(dmg)-1 do
+            begin                if dmg[i] = nil then continue; // контроль наличия пули
+                          if sizeof(dmg[i]) = 0 then continue;  // повторный контроль
+                if dmg[i].top<400+height  then dmg[i].top:=dmg[i].top+3; // перемещение пули
+                if dmg[i].top>390 +height then begin    dmg[i].Hide;   dmg[i].free;    dmg[i]:=nil;
+                          continue ;  end;  //улетела
+               inc(n); //если пуля есть, то её считаем
+            end;      if n<0 then setlength(dmg,0) ;    //если пуль нет, то  стираем  трассу пуль
+
+                     s:='t '+inttostr(top)+' L '+inttostr(left)+ ' y '+inttostr(spd_y)+   ' x '+inttostr(spd_x);
+            result:=s+' n = '+inttostr(n); //отображаем  результат
+end;
+
+
+procedure Register;
+begin
+  {$I xaa_img1_icon.lrs}
+//  Transparent:=true; //убирает фон с рисунков
+  RegisterComponents('game_xaa',[xaa_img]);
+end;
+
+function  xaa_img.DestRect: TRect;
+begin    Result := inherited DestRect();  Transparent:=true;
+ if (FOffsetX <> 0) or (FOffsetY <> 0) then
+ LCLProc.OffsetRect(Result, -FOffsetX, -FOffsetY); end;
+
+
+procedure  xaa_img.blink(limit,predel:integer);
+begin    OffsetX := (OffsetX + limit) mod predel;
+end;
+
+procedure  xaa_img.SetOffsetX(AValue: Integer); // опишем процедуру
+begin   if FOffsetX = AValue then exit;   FOffsetX := AValue;  PictureChanged(Self);
+ end;
+procedure  xaa_img.SetOffsetY(AValue: Integer); // опишем  процедуру
+begin    if FOffsetY = AValue then exit;    FOffsetY := AValue;  PictureChanged(Self);
+end;
+
+
+end.                                                                                             
